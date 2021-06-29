@@ -701,3 +701,403 @@ def initialise_isotopologue_set(G: nx.DiGraph, cl_comp, add_mol_ion: bool=False,
         node.iso = Isotopologues(node.fragment, node.idx_measured_mass, cl_comp)
         node.iso.create_isotopologue_suite()
 
+
+
+################################################################################
+    
+
+def initialise_isotopologue_k_guess(G: nx.DiGraph, ppm_mass_res: float, cl_comp, run_type: RunType):
+
+    """Compute the k_guess of the isotopologue suite for each node in G
+
+    INPUT:
+    - `G`: a graph whose nodes are representing fragments
+    - `ppm_mass_res`: interval in ppm between two mass point on the x axis,
+        value is read from file const_identification.py
+    - `cl_comp`: instance of class Compound
+    - `run_type`: tofwerk_tof, NIST or no_mass_cal
+
+
+    RETURN: None
+    """
+    t2 = time.time()
+    for i_node in  G.nodes:
+
+        isotopologue = G.nodes[i_node]['node_lite'].iso
+        isotopologue.initialise_k_guess(ppm_mass_res, cl_comp, run_type)
+
+        t3 = time.time()
+    time_fit_iso_profile = t3-t2
+    print("time_fit_iso_profile = {:.6f} s".format(time_fit_iso_profile))
+
+
+def graph_optimise_isotopologues(G: nx.DiGraph, run_type:RunType, cl_comp: Compound, ppm_mass_res: float, iso_fit_mode, plot_mode):
+
+    print("Entering graph_optimise_isotopologues")
+
+    list_removed_nodes = []
+
+    #Order list of nodes by increasing mass
+
+    list_nodes_masses = [(G.nodes[i_node]['node_lite'].iso.frag_abund_mass, i_node) for i_node in G.graph['nodes_validated']]
+    list_nodes_masses.sort()
+    list_nodes = [node_number for (mass, node_number) in list_nodes_masses]
+    
+    i = 0
+
+    mass_window_list_node = []  #list of node_key
+    #Depending on candidate isotopologues, split mass window into smaller,
+    #no-overlapping mass sub-windows
+    #if there is only one node, make only one mass window (no sub-windows)
+
+    while i < len(list_nodes):
+        iso = G.nodes[list_nodes[i]]['node_lite'].iso
+        w_start = round(iso.iso_list_m_min) - cl_comp.mass_axis_offset
+        w_stop  = round(iso.iso_list_m_max) + cl_comp.mass_axis_offset
+        #print('w_start:' + '{:.4f}'.format(w_start), 'i_start: ' + str(i))
+        #print('w_stop:' + '{:.4f}'.format(w_stop), 'i_stop: ' + str(i))
+
+        # find overlapping nodes whose exact minimum mass is lower than w_stop: masses overlap
+        j = i
+        while (j+1) < len(list_nodes) and G.nodes[list_nodes[j+1]]['node_lite'].iso.iso_list_m_min < w_stop:
+            j += 1
+            w_stop = max(w_stop, G.nodes[list_nodes[j]]['node_lite'].iso.iso_list_m_max)
+            #print('w_stop:' + '{:.4f}'.format(w_stop), 'i_stop: ' + str(j))
+        # now there is a range of masses for the nodes i to j included (j+1 excluded)
+        mass_window_list_node.append(list_nodes[i:j+1])
+        i = j+1
+
+
+    k_opt_list = [None] * len(mass_window_list_node)
+    delta_mass_opt_list = [0.0] * len(mass_window_list_node)
+    for i_w_m in range(len(mass_window_list_node)):
+        
+        #myriam TODO 20201210.
+        #list of list of nodes fitted together : mass_window_list_node[i_w_m]
+        #Here would be good if it was possible to check if the list of nodes to be fitted together
+        #has been fitted already.
+        #so we need a new list as attribute to the graph,
+        #containing the list of list of nodes fitted together.
+        old_list_node = mass_window_list_node[i_w_m]
+        is_list_already_fitted = False
+        for i_list in range(len(G.graph['list_of_fitted_nodes'])):
+            if mass_window_list_node[i_w_m] == G.graph['list_of_fitted_nodes'][i_list]:
+                is_list_already_fitted = True
+                #print("lmfit job already done with this group of nodes, continue")
+        
+        #check that there still are nodes, they may have been removed
+        #re-compute mass range, may have become smaller.
+        if len(mass_window_list_node[i_w_m]) > 0 and is_list_already_fitted == False:
+
+            #update list of nodes fitted together:
+            #we add it here. If a node is later removed (<LOD or singleton) then we want to fit once more.
+            #print("New lmfit job")
+            
+
+
+            #re-initialise things here?
+            cl_comp.initialise_mass_profile()
+            #reconstruct measured mass profile:
+
+            w_start = round(min([G.nodes[mass_window_list_node[i_w_m][i_m]]['node_lite'].iso.iso_list_m_min for i_m in range(len(mass_window_list_node[i_w_m]))])) - cl_comp.mass_axis_offset
+            w_stop =  round(max([G.nodes[mass_window_list_node[i_w_m][i_m]]['node_lite'].iso.iso_list_m_min for i_m in range(len(mass_window_list_node[i_w_m]))])) + cl_comp.mass_axis_offset
+
+
+            #mass_window_list[i_w_m] = [w_start, w_stop]
+            #print('Mass window: ' + str([w_start, w_stop]))
+            
+            #per window, optimise quantity of each isotopologue
+            #treat this as optimisation routine, using lmfit
+            #if all iso masses have apex below LOD, remove isotopologue from list of candidate
+            #(or set factor to zero and fixed)
+            
+            #create x axis of the mass profile
+            cl_comp.do_meas_mass_profile_x(w_start, w_stop, ppm_mass_res)
+            delta_mass = 0.0
+            #calculate measured mass profile at each x value on the x axis (mass axis)
+            cl_comp.do_meas_mass_profile(delta_mass)
+            
+            #print('Indexes of measured masses: ' + str(cl_comp.meas_mass_profile_idx))
+        
+            if len(cl_comp.meas_mass_profile_idx) > 0 :
+    
+                cl_comp.do_iso_profiles([i for i in range(len(mass_window_list_node[i_w_m]))], [G.nodes[i_node]['node_lite'].iso for i_node in mass_window_list_node[i_w_m]])
+                cl_comp.k_guesses = [G.nodes[i_node]['node_lite'].iso.k_guess for i_node in mass_window_list_node[i_w_m]]
+    
+    
+                
+                #plot figures for presentation
+                """
+                if i_w_m == len(mass_window_list_idx)-1:
+                    fig, ax1 = plt.subplots(figsize=(5,2))
+                    #fig.suptitle(cl_run.toffile_name + ': Mass vs RT', fontsize=12)
+                    for i_iso in range(len(cl_comp.iso_profiles)):
+                        
+                        ax1.plot(cl_comp.meas_mass_profile_x, cl_comp.meas_mass_profile, 'k-')
+                        ax1.plot(cl_comp.meas_mass_profile_x, cl_comp.iso_profiles[i_iso], '-', color = str(color1_names[i_iso]))
+                    plt.xlabel('Mass [m/z]')
+                    plt.ylabel('Intensity')
+                    ax1.ticklabel_format(axis = 'both', style = 'plain', useMathText=False)
+                    ax1.grid(True, color='xkcd:grey', linestyle='--', linewidth=0.5)
+                    ax1.set_yscale('log')
+                    #fig.tight_layout()
+                    #fig_name = cl_run.toffile_name + '_mass_vs_rt_'+'{:.2f}'.format(rt_average) + 's' +   '_valid.png'
+                    #fig_path = cl_path.dict_path['mass_spectra']
+                    #fig_file = fig_path/fig_name
+                    #plt.savefig(fig_file, bbox_inches='tight', transparent = True, dpi = 300)
+                    plt.show()
+                """
+                
+                indexes = [i for i in range(len(mass_window_list_node[i_w_m]))]
+                no_candidates = len(indexes)
+                min_k = min(cl_comp.k_guesses)
+                while no_candidates > 0 and len(cl_comp.meas_mass_profile_x) < no_candidates:
+                    #too many possibilities.
+                    #Eliminate less likely possibilities.
+                    
+                    indexes_valid = [i for i in range(len(cl_comp.k_guesses)) if cl_comp.k_guesses[i] > min_k]
+                    no_candidates = len(indexes_valid)
+                    if no_candidates > 0:
+                        min_k = min([cl_comp.k_guesses[i] for i in indexes_valid])
+                
+                if no_candidates < len(mass_window_list_node[i_w_m]):
+                    #elements have been removed
+                    mass_window_list_node[i_w_m] = [mass_window_list_node[i_w_m][i] for i in indexes_valid]
+                    cl_comp.k_guesses = [cl_comp.k_guesses[i] for i in indexes_valid]
+                    cl_comp.iso_profiles = [cl_comp.iso_profiles[i] for i in indexes_valid]
+                
+                #check that number of data is higher than number of candidate isotopologue series
+                if len(cl_comp.meas_mass_profile_idx) > 0 and len(cl_comp.meas_mass_profile_x) >= len(mass_window_list_node[i_w_m]):
+                    #addendum after NF3 test
+                    #if only one measured mass but several candidates, fix x_axis otherwise will move without proper constrain
+                    if len(cl_comp.meas_mass_profile_idx) == 1 and len(mass_window_list_node[i_w_m]) > 1:
+                        iso_fit_mode = fit_mode_fixed_x_axis
+                        
+                    cl_comp.k_guesses_min = min(min([cl_comp.meas_I[i_m] for i_m in cl_comp.meas_mass_profile_idx]), min([cl_comp.meas_LOD[i_m] for i_m in cl_comp.meas_mass_profile_idx]), cl_comp.LOD)/1000.0
+                    cl_comp.k_guesses_max = max([cl_comp.meas_I[i_m] for i_m in cl_comp.meas_mass_profile_idx])
+    
+                    k_opt_list[i_w_m], delta_mass_opt_list[i_w_m] = fit_iso_profile(cl_comp, delta_mass, run_type, [i for i in range(len(mass_window_list_node[i_w_m]))], cl_comp.k_guesses, cl_comp.iso_profiles, iso_fit_mode, graph = False)
+                    #print("k_opt_list[i_w_m] " + str(k_opt_list[i_w_m]))
+    
+                else:
+                    print('Not enough measured points to constrain fit')
+                    k_opt_list[i_w_m] = [0.0]*len(mass_window_list_node[i_w_m])
+                    delta_mass_opt_list[i_w_m] = 0.0
+    
+                #list_iso_removed_nodes = []
+                for i_iso in range(len(mass_window_list_node[i_w_m])):
+                    key_node = mass_window_list_node[i_w_m][i_iso]
+    
+                    #str_formula = G_of_frag.nodes[key_node]['node_lite'].iso.frag_abund_formula
+                    #print(str_formula + '\t' + '\t' +
+                    #print(isotopologues_list[mass_window_list_idx[i_w_m][i_iso]].frag_abund_formula + '\t' + '\t' +
+                          #'{:.4f}'.format(cl_comp.k_guesses[i_iso]) + '\t' +
+                          #'{:.4f}'.format(k_opt_list[i_w_m][i_iso]))
+    
+                    iso = G.nodes[key_node]['node_lite'].iso
+                    # there three lines shoud become a method in class Isotopologue
+                    iso.update_k_opt(k_opt_list[i_w_m][i_iso])
+                    
+                    #update graph, remove node if signal < threshold
+                    if iso.iso_list_sum_signal * 3.0 < cl_comp.LOD:
+                        print("** node below LOD removed: {}".format(iso.frag_abund_formula))
+                        remove_node_update_edges(G, G.nodes[key_node]['node_lite'], cl_comp)
+                        G.graph['nodes_validated'].remove(key_node)
+                        list_removed_nodes.append(key_node)
+                        G.graph['no_nodes_below_LOD'] += 1
+
+                list_removed_nodes_singletons = [sgl.unique_id for sgl in remove_singletons(G)]
+                #list_removed_nodes_singletons = [sgl.unique_id for sgl in remove_all_singletons(G)]
+                list_removed_nodes += list_removed_nodes_singletons
+                """
+                for key_node in G.graph['nodes_validated']:
+                    if key_node not in G.nodes():
+                        G.graph['nodes_validated'].remove(key_node)
+                        print('***Extra removed node: ***' + str(key_node))
+                """
+                
+                #remove the removed nodes from list of nodes per mass windows
+                
+                for k_node in list_removed_nodes:
+                    i_w = 0
+                    found = False
+                    #a node is in one mass window only
+                    while i_w < len(mass_window_list_node) and not found:
+                        
+                        if k_node in mass_window_list_node[i_w]:
+                            mass_window_list_node[i_w].remove(k_node)
+                            found = True
+                        i_w += 1
+                        
+        if mass_window_list_node[i_w_m] == old_list_node:
+            #the list of fitted nodes stays unchanged (no node removed).
+            #So it makes sense to add it to the list of fitted nodes.
+            #if the list is changed (node removed) then new lists will necessarily be different.
+            G.graph['list_of_fitted_nodes'].append(mass_window_list_node[i_w_m])
+
+
+def graph_order_by_att_likelihood(G: nx.DiGraph, cl_comp):
+    """
+    Computes the intensity of signal
+
+    Parameters
+    ----------
+    G : networkx DiGraph. Each node is a fragment potential solution, is an instance of class isotopologue.
+        DESCRIPTION.
+    cl_comp : instance of class compound. Contains measured informations.
+        DESCRIPTION.
+
+    Returns
+    -------
+    None
+
+    
+    In particular:
+        G.nodes_ordered_by_likelihood is a list of key of nodes, ordered by decreasing likelihood.
+
+    """
+
+
+    for key_node in G.nodes:
+        node = G.nodes[key_node]['node_lite']
+        isotopologue = G.nodes[key_node]['node_lite'].iso
+
+        set_subfragments = nx.descendants(G, key_node)
+
+        #sum of optimised signal that can be assigned to this node
+        #and all its subfragments
+        node.subgraph_sum_I = isotopologue.iso_list_sum_signal + sum([G.nodes[key_node_anc]['node_lite'].iso.iso_list_sum_signal for key_node_anc in set_subfragments])
+
+        #print(str(G.nodes[key_node]['node_lite'].iso.frag_abund_formula) + "  " + str(node.subgraph_sum_I))
+        node.subgraph_percent_I = float(100.0)*node.subgraph_sum_I/cl_comp.sum_I
+
+        #Is this node created by the knapsack (in this case it has a found measured mass)
+        #or is it a constructed molecular ion (in this case it has no measured mass)?
+        node_found_in_meas_data = float(1)
+        if isotopologue.iso_list_sum_signal == 0:
+            #this is a constructed molecular ion, 
+            #does not correspond to any measured mass,
+            #this node was not found in measured mass data.
+            node_found_in_meas_data = float(0)
+
+        #20200805 modification of metrics
+        #number of explained nodes is (1+ len(set_subfragments))
+        #we want to give more likelihood to the maximal node being closest to 100% signal, without overshoot
+        node.subgraph_likelihood = (100.0 - abs(100.0-node.subgraph_percent_I)) * (node_found_in_meas_data + len(set_subfragments)) / node.no_all_subfragments
+        # TODO replace 1+len(set_subfragments) by node.subgraph_size
+
+    list_likelihood = [(G.nodes[key_node]['node_lite'].subgraph_likelihood, key_node) for key_node in G.nodes]
+    list_likelihood.sort(reverse = True)
+    G.nodes_ordered_by_likelihood = [node_index for (value, node_index) in list_likelihood]
+
+    print('Fragment' + '\t' + '% Optimised signal' + '\t' + 'Likelihood')
+    if len(G.graph['nodes_validated']) == 0:
+        for idx_node in range(min(10, G.number_of_nodes())):
+            node = G.nodes[G.nodes_ordered_by_likelihood[idx_node]]['node_lite']
+            print("{}\t{:.1f}\t{:.1f}".format(node.iso.frag_abund_formula, node.subgraph_percent_I, node.subgraph_likelihood))
+    else:
+        for idx_node in range(min(10, len(G.graph['nodes_validated']))):
+            if G.nodes_ordered_by_likelihood[idx_node] in G.graph['nodes_validated']:
+                node = G.nodes[G.nodes_ordered_by_likelihood[idx_node]]['node_lite']    
+                print("{}\t{:.1f}\t{:.1f}".format(node.iso.frag_abund_formula, node.subgraph_percent_I, node.subgraph_likelihood))
+        
+
+def graph_percent_sum_signal(G: nx.DiGraph, sum_I: float):
+    """This function computes two values used to determine
+    if the optimsation loop should be continued further or stopped.
+    
+    (1) Computes the proportion of signal explained by the validated nodes 
+    in G.graph['nodes_validated']
+
+    First sum the signal intensities for each node in G.graph['nodes_validated']
+    Secondly, add signal intensities of all sub-fragments on the graph.
+    
+    (2) Compute the number of measured masses explained by at least one validated node,
+    and the number of measured masses that have a candidate fragments to explain them,
+    but still not "validated".
+    
+    
+    """
+    sum_signal = sum([G.nodes[key_node]['node_lite'].iso.iso_list_sum_signal for key_node in G.graph['nodes_validated']])
+    percent_sum_signal = sum_signal/sum_I*float(100.0)
+
+    
+    list_masses_to_optimise = []
+    no_masses_to_optimise = 0
+
+    no_optimised_masses = 0
+    list_masses_optimised = []
+
+    # here this code lists all the indices of masses that can be explained 
+    # by a fragment in the graph, considering the isotopologues.
+    # a variant would be to list all the masses, then sort the list, 
+    # then copy the list without the duplicates, to avoid many tests.
+    # moreover, this list is constant as long as the number of (validated?) nodes in the graph does not change.
+    for key_node in G.nodes:
+
+        iso = G.nodes[key_node]['node_lite'].iso
+        for mi in iso.meas_mass_idx:
+            for mii in mi:
+                if mii != None and mii not in list_masses_to_optimise:
+                    list_masses_to_optimise.append(mii)
+
+
+    no_masses_to_optimise = len(list_masses_to_optimise)
+    #print("List masses to optimise")
+    #print(list_masses_to_optimise)
+
+
+    for key_node in G.graph['nodes_validated']:
+
+        iso = G.nodes[key_node]['node_lite'].iso
+        for mi in iso.meas_mass_idx:
+            for mii in mi:
+                if mii != None and mii not in list_masses_optimised:
+                    #if mi != None and mi not in list_masses_optimised:
+                        list_masses_optimised.append(mii)
+
+    
+    no_optimised_masses = len(list_masses_optimised)
+    #print("list_masses_optimised  " + str(list_masses_optimised))
+
+
+    
+    return sum_signal, percent_sum_signal, no_optimised_masses, no_masses_to_optimise
+
+
+
+
+def get_list_identified_unidentified_mass(G:nx.DiGraph, cl_comp):
+    """
+    Parameters
+    ----------
+    G : TYPE: networkx graph. Each node contains an instance of Isotopologues.
+    cl_comp: instance of Compound
+
+    Returns
+    -------
+    List of indexes of identified masses.
+    List of indexes of non-identified masses.
+    Computes total assigned signal for each measured mass. Total may be > measured.
+    """
+    #used 20200730
+    identified_mass_idx_list = []
+    unidentified_mass_idx_list = []
+    #assigned_I = [float(0.0)]*cl_comp.meas_len
+    for i_node in G.nodes:
+        iso = G.nodes[i_node]['node_lite'].iso
+        if iso.meas_mass_idx is not None:
+            for idx_m in range(len(iso.meas_mass_idx)):
+                if iso.meas_mass_idx[idx_m] is not None:
+                    for i_m in range(len(iso.meas_mass_idx[idx_m])):
+                        if iso.meas_mass_idx[idx_m][i_m] is not None:
+                            #assigned_I[idx_m] += min(iso.iso_list_I_rel[idx_m] * iso.k_guess, cl_comp.meas_I[idx_m])
+                            if iso.meas_mass_idx[idx_m][i_m] not in identified_mass_idx_list:
+                                identified_mass_idx_list.append(iso.meas_mass_idx[idx_m][i_m])
+
+
+    for idx_m in range(cl_comp.meas_len):
+        if idx_m not in identified_mass_idx_list:
+            unidentified_mass_idx_list.append(idx_m)
+
+    return identified_mass_idx_list, unidentified_mass_idx_list
