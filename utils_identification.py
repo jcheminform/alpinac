@@ -108,6 +108,58 @@ class Binomial():
         self.tab_binomial[n-1][i] = res
         return res
 
+# multinomial coefficient
+# https://en.wikipedia.org/wiki/Multinomial_theorem#Multinomial_coefficients
+# in Sagemath: multinomial_coefficients
+# from sage.arith.misc import multinomial_coefficients
+def multinomial_coefficient(a, n):
+    """ return multinominal coefficient
+    """
+    c = float(1.0)
+    ni = int(n)
+    for ai in a[:-1]: # do not count the last one
+        c *= Binomial.binom(ai, ni)
+        ni -= ai
+    return c
+
+def p_iso_rare_compute(abundant_frag, fragment):
+    """ returns the frequency ratio of rare iso / abundant iso
+    some reference: Gross, 2017, p. 98
+    Snider 2007: Efficient Calculation of Exact Mass Isotopic Distributions
+    Kubinyi 1991: Calculation of isotope distributions in mass spectrometry:
+        A trivial solution for a non-trivial problem
+    Yergey 1983: A GENERAL APPROACH TO CALCULATING ISOTOPIC
+        DISTRIBUTIONS FOR MASS SPECTROMETRY
+    """
+    p_iso=float(1)
+    #p_factor=float(1)
+
+    for index in range(len(fragment)):
+        n_abund=float(0)
+        n_rare=float(0)
+        p_factor=float(1)
+        if abundant_frag[index]>0 or fragment[index]>0 and abundant_frag[index] != fragment[index] and chem_data.abundance[index] != 1:
+            if abundant_frag[index] > fragment[index]:
+                #print('test p_iso l. 91 ' + str(abundant_frag[index]))
+                # p_factor = p_factor * (n_abund) * (n_abund-1) * ... * (fragment[index]+1)
+                n_abund=abundant_frag[index]
+                while (n_abund - fragment[index]) > 0:
+                    p_factor *= n_abund
+                    n_abund -= 1
+                #print('test p_iso l. 97 ' + str(abundant_frag[index]))
+            elif abundant_frag[index] < fragment[index]:
+                #print('test p_iso l. 99 ' + str(fragment[index]))
+                # p_factor = p_factor / (n_rare) / (n_rare-1) / ... / (abundant_frag[index]+1)
+                n_rare=fragment[index]
+                while (n_rare - abundant_frag[index]) > 0:
+                    p_factor /= n_rare
+                    n_rare -= 1
+                #print('test p_iso l. 104 ' + str(fragment[index]))
+            #print('test p_iso l. 105 ' + str(p_factor))
+            #print('test p_iso l. 106 ' + str(fragment[index]-abundant_frag[index]))
+            p_iso *= p_factor*float(chem_data.abundance[index])**float(fragment[index]-abundant_frag[index])
+    return p_iso
+
 def p_iso_rare_compute_wrt_pure_abundant(abundant_frag: list, fragment: list)-> float:
     """Assume abundant_frag is made of abundant atoms only
     """
@@ -126,6 +178,19 @@ def p_iso_rare_compute_wrt_pure_abundant(abundant_frag: list, fragment: list)-> 
                 p_iso *= (chem_data.abundance[idx_rare]/chem_data.abundance[i]) * bi
             n_e -= n_ei
     return p_iso
+
+def number_rare_isotopes(fragment):
+    """ returns the total number of rare isotopes in the fragment (two atoms of [37Cl] count as two, one [37Cl] and one [18O] count as two)
+    fragment: a list of non-negative integers (0 or positive value), corresponding to the number of atoms in the fragment
+    idx_rare_isotopes: a list of indices of rare isotopes """
+    return sum([fragment[ii] for ii in chem_data.idx_rare_isotopes])
+
+def nb_abundant_isotopes(fragment):
+    """ returns the number of distinct abundant isotopes in the fragment)
+    fragment: a list of non-negative integers (0 or positive value), corresponding to the number of atoms in the fragment
+    idx_abun_isotopes: a list of indices of abundant isotopes.
+    Note that elements that do not have isotopes are counted as abundant."""
+    return sum([min(1,fragment[ii]) for ii in chem_data.idx_abun_isotopes])
 
 def _get_patterns_aux(sum_: int, vec_a: list, idx: int, res: list) -> None:
     """Recursive enumeration of patterns (multinomial)
@@ -226,7 +291,13 @@ def generate_all_isotopolog_fragments_with_relative_proba(frag:list, min_relativ
         list_fragments_with_proba = list_fragments_with_proba_all_elements[j_]
         frg_abun = iso_atoms[0]
         if min_relative_proba is not None:
+            #print('min_relative_proba: ' + str(min_relative_proba))
+            #print('max_rel_abundance: ' + str(max_rel_abundance))
+            #print('list_max_rel_abun[j_]: ' + str(list_max_rel_abun[j_]))
             min_rel_pr = min_relative_proba/max_rel_abundance*list_max_rel_abun[j_]
+            #print('min_rel_pr ' + str(min_rel_pr))
+            #print("assert test: "+  str(min_rel_pr <= min_relative_proba))
+            #assert min_rel_pr <= min_relative_proba #!!!! commended mygu 20201012, to be checked by Aurore
             # 1. partition list_fragments_with_proba in two subsets according to the threshold min_relative_proba and cut
             l=0
             r=len(list_fragments_with_proba)
@@ -663,6 +734,40 @@ def knapsack_double(mass_measured: float, mass_max: float, mass_min: float, idx_
         return ctr, ctr_DBE, list_results, mass_DBE2_frag_multi_val, mass_atoms_frag_mono_val
     else:
         return ctr, ctr_DBE, list_results
+
+def define_knapsack_target(target_atoms: str='HCNOSFClBrI', target_formula: bool=None):
+    #**********************************************************
+    # CASE OF UNKNOWN FORMULA
+    #**********************************************************
+    if target_atoms is None:
+        target_atoms = 'HCNOSFClBrI'
+        #target_atoms = 'HCFClBrI'
+    if target_formula is None and target_atoms is not None:
+        #no defined target formula.
+        #defined target atoms
+        target_e_list = formula_to_e_list(target_atoms)
+        max_no_each_atom = None
+
+    #**********************************************************
+    # CASE OF KNOWN OR CHOSEN TARGET FORMULA
+    #**********************************************************
+    elif target_formula is not None:
+        target_e_list = formula_to_e_list(target_formula)
+        entire_molecule = formula_to_frag(target_formula)
+        max_no_each_atom = [ai for ai in entire_molecule if ai != 0]
+    
+    """
+    Make a list with only the abundant isotopologues
+    and the monoisotopic atoms for the knappsack algo
+    Do not include atoms where valence = 0, they do not bind to anything.
+    """
+    idx_list_kn = []
+
+    for idx in [_ for _ in chem_data.idx_abun_isotopes if chem_data.valence[_] > 0]:
+        if chem_data.element[idx] in target_e_list:
+            idx_list_kn.append(idx)
+
+    return idx_list_kn, max_no_each_atom
 
 def bounded_integer_knapsack_rec_aux(vec_fragment: list, id_kn: int, idx_list_kn: list, list_results: list, max_no_each_atom: list, max_sum_no_remain_atoms: int=None, min_mass: float=None, ctr: int=0) -> int:
     """Recursive sub-function for bounded_integer_knapsack_rec
