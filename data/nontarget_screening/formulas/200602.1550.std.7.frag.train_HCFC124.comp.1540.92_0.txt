@@ -1,0 +1,16 @@
+Run file: 200602.1550.std.7.frag.train_HCFC124
+#############################################
+Compound index: 0
+Average retention time, seconds: 1540.92
+Largest detected fragment series:
+Formula	Likelihood indicator (%)	DBE	Molecular ion?
+HC2F4Cl+: 	17.85	0.0	True
+% norm I, exact	RT [s]	Total Intensity	% of Total Intensity	Meas. mass [m/z]	Exact mass [m/z]	Exact mass, u [ppm]	Mass diff [ppm]	Formula	DBE	Intensity	Intensity, fraction	Ionisation mode
+30.3240	1540.75	2624.24	100.0	100.999148	101.000889	38.9	17.2	HC2F4+	0.5	2622.94	1.000	EI
+25.9573	1541.14	2429.79	92.6	66.973341	66.974532	36.9	17.8	HCFCl+	0.5	2245.23	0.924	EI
+17.7449	1540.79	1534.88	58.5	51.003789	51.004083	51.5	5.8	HCF2+	0.5	1534.88	1.000	EI
+11.0297	1540.93	1219.98	46.5	68.993041	68.994661	30.9	23.5	CF3+	0.5	954.04	0.782	EI
+8.3031	1540.93	1219.98	46.5	68.993041	68.971582	30.9	-311.0	HCF[37Cl]+	0.5	718.19	0.589	EI
+8.2590	1541.01	714.39	27.2	116.971647	116.971339	77.5	-2.6	HC2F3Cl+	0.5	714.38	1.000	EI
+0.8833	1541.09	76.49	2.9	135.965704	135.969742	110.8	29.7	HC2F4Cl+	0.0	76.40	0.999	EI
+0.5734	1541.14	49.94	1.9	81.998812	82.002486	99.9	44.8	HC2F3+	1.0	49.59	0.993	EI

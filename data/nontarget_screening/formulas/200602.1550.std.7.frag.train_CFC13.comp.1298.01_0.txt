@@ -1,0 +1,17 @@
+Run file: 200602.1550.std.7.frag.train_CFC13
+#############################################
+Compound index: 0
+Average retention time, seconds: 1298.01
+Largest detected fragment series:
+Formula	Likelihood indicator (%)	DBE	Molecular ion?
+CF3Cl+: 	39.59	0.0	True
+CF4+: 	28.76	0.0	True
+CF2Cl2+: 	8.25	0.0	True
+% norm I, exact	RT [s]	Total Intensity	% of Total Intensity	Meas. mass [m/z]	Exact mass [m/z]	Exact mass, u [ppm]	Mass diff [ppm]	Formula	DBE	Intensity	Intensity, fraction	Ionisation mode
+65.5501	1298.00	12124.52	100.0	68.993126	68.994661	26.9	22.2	CF3+	0.5	12123.30	1.000	EI
+19.4998	1297.94	3606.43	29.7	84.963516	84.965110	38.6	18.8	CF2Cl+	0.5	3606.43	1.000	EI
+5.9489	1298.25	1100.23	9.1	49.995574	49.996258	46.9	13.7	CF2+	1.0	1100.23	1.000	EI
+5.5739	1298.11	1030.88	8.5	86.960470	86.962160	55.5	19.4	CF2[37Cl]+	0.5	1030.88	1.000	EI
+1.5091	1297.57	279.10	2.3	34.967867	34.968304	34.6	12.5	Cl+	0.5	279.10	1.000	EI
+0.4827	1298.20	277.53	2.3	36.964888	36.965354	62.9	12.6	[37Cl]+	0.5	89.28	0.322	EI
+0.4110	1297.83	76.02	0.6	69.996125	69.998016	107.7	27.0	[13C]F3+	0.5	76.02	1.000	EI

@@ -1,0 +1,13 @@
+Run file: 190424.0810.tank.3.frag.val_HFC41
+#############################################
+Compound index: 0
+Average retention time, seconds: 1386.89
+Largest detected fragment series:
+Formula	Likelihood indicator (%)	DBE	Molecular ion?
+H3CF+: 	74.92	0.0	True
+% norm I, exact	RT [s]	Total Intensity	% of Total Intensity	Meas. mass [m/z]	Exact mass [m/z]	Exact mass, u [ppm]	Mass diff [ppm]	Formula	DBE	Intensity	Intensity, fraction	Ionisation mode
+50.0896	1386.89	20007.33	100.0	34.022380	34.021330	73.8	-30.9	H3CF+	0.0	19846.09	0.992	EI
+46.0191	1386.88	18233.74	91.1	33.014692	33.013505	76.3	-36.0	H2CF+	0.5	18233.31	1.000	EI
+3.0770	1386.84	1219.16	6.1	30.998944	30.997855	89.7	-35.1	CF+	1.5	1219.14	1.000	EI
+0.5155	1386.89	20007.33	100.0	34.022380	34.016859	73.8	-162.3	H2[13C]F+	0.5	204.25	0.010	EI
+0.4062	1386.79	160.96	0.8	35.025742	35.024685	97.0	-30.2	H3[13C]F+	0.0	160.96	1.000	EI

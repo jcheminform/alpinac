@@ -1,0 +1,17 @@
+Run file: 200602.1550.std.7.frag.train_CH2Br2
+#############################################
+Compound index: 0
+Average retention time, seconds: 1790.97
+Largest detected fragment series:
+Formula	Likelihood indicator (%)	DBE	Molecular ion?
+H2CBr2+: 	43.60	0.0	True
+% norm I, exact	RT [s]	Total Intensity	% of Total Intensity	Meas. mass [m/z]	Exact mass [m/z]	Exact mass, u [ppm]	Mass diff [ppm]	Formula	DBE	Intensity	Intensity, fraction	Ionisation mode
+25.3797	1790.91	2307.02	100.0	173.848892	173.849729	40.6	4.8	H2CBr[81Br]+	0.0	2307.02	1.000	EI
+19.0085	1790.98	1837.07	79.6	92.930499	92.933439	53.0	31.6	H2CBr+	0.5	1727.88	0.941	EI
+18.4940	1790.86	1781.32	77.2	94.930677	94.931391	54.1	7.5	H2C[81Br]+	0.5	1681.11	0.944	EI
+13.1490	1791.03	1195.49	51.8	171.851406	171.851777	55.0	2.2	H2CBr2+	0.0	1195.24	1.000	EI
+12.4467	1791.07	1226.04	53.1	175.848195	175.847681	51.9	-2.9	H2C[81Br]2+	0.0	1131.41	0.923	EI
+3.3448	1790.89	304.05	13.2	78.916242	78.917789	104.2	19.6	Br+	0.5	304.05	1.000	EI
+2.7782	1791.25	252.54	10.9	80.915515	80.915741	92.9	2.8	[81Br]+	0.5	252.54	1.000	EI
+1.7729	1791.29	186.48	8.1	90.917724	90.917789	122.7	0.7	CBr+	1.5	161.16	0.864	EI
+1.7249	1790.98	1837.07	79.6	92.930499	92.915741	53.0	-158.8	C[81Br]+	1.5	156.79	0.085	EI

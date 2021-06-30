@@ -1,0 +1,11 @@
+Run file: 200714.2200.cal6L.7.frag.train_SO2F2
+#############################################
+Compound index: 0
+Average retention time, seconds: 1385.37
+Largest detected fragment series:
+Formula	Likelihood indicator (%)	DBE	Molecular ion?
+O3FCl+: 	22.83	0.0	True
+% norm I, exact	RT [s]	Total Intensity	% of Total Intensity	Meas. mass [m/z]	Exact mass [m/z]	Exact mass, u [ppm]	Mass diff [ppm]	Formula	DBE	Intensity	Intensity, fraction	Ionisation mode
+57.8698	1385.40	172.95	100.0	82.957363	82.953048	122.4	-52.0	O3Cl+	0.5	170.83	0.988	EI
+33.2536	1385.29	98.43	56.9	101.954964	101.951451	106.4	-34.5	O3FCl+	0.0	98.16	0.997	EI
+7.8162	1385.47	23.81	13.8	66.963061	66.958133	115.0	-73.6	O2Cl+	0.5	23.07	0.969	EI

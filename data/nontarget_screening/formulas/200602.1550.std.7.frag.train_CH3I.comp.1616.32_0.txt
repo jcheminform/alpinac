@@ -1,0 +1,12 @@
+Run file: 200602.1550.std.7.frag.train_CH3I
+#############################################
+Compound index: 0
+Average retention time, seconds: 1616.32
+Largest detected fragment series:
+Formula	Likelihood indicator (%)	DBE	Molecular ion?
+H3CI+: 	66.67	0.0	True
+% norm I, exact	RT [s]	Total Intensity	% of Total Intensity	Meas. mass [m/z]	Exact mass [m/z]	Exact mass, u [ppm]	Mass diff [ppm]	Formula	DBE	Intensity	Intensity, fraction	Ionisation mode
+67.5236	1616.34	2441.08	100.0	141.925575	141.927398	42.7	12.8	H3CI+	0.0	2441.08	1.000	EI
+23.0812	1616.29	834.42	34.2	126.901898	126.903923	43.9	16.0	I+	0.5	834.42	1.000	EI
+7.5043	1616.26	271.29	11.1	140.918342	140.919573	84.6	8.7	H2CI+	0.5	271.29	1.000	EI
+1.8909	1616.21	68.36	2.8	138.901996	138.903923	91.3	13.9	CI+	1.5	68.36	1.000	EI
