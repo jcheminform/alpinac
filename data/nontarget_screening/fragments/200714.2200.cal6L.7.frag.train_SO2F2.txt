@@ -1,0 +1,4 @@
+RT	mass	mass_u_ppm	mass_cal_u_ppm	area	area_u	peak_width	peak_alpha	compound_bin	LOD	SN	Ionisation
+1385.29	101.9549639	41.35	5.8	98.43	14.15	0.01064	0.6	0	52.29	1.88	EI
+1385.4	82.9573635	47.91	3.86	172.95	13.96	0.00898	0.6	0	36.3	4.76	EI
+1385.47	66.963061	44.92	4.04	23.81	10	0.00758	0.6	0	20.05	1.19	EI
