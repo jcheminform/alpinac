@@ -46,7 +46,7 @@ dict_path = make_dict_of_paths()
 #toffile_list1 = list(dict_path['fragments'].glob('[1,2]*.frag.val_*.txt'))
 #toffile_list = toffile_list0 + toffile_list1
 
-toffile_list = list(dict_path['fragments'].glob('[1,2]*.frag.train_*.txt'))
+toffile_list = list(dict_path['fragments'].glob('[1,2]*.frag.val_*.txt'))
 #for file in toffile_list:
 #    print(file.name)
 #toffile_list = list(dict_path['fragments'].glob('210623.2029.tank.11.frag.search_flurane_1386s.txt'))
@@ -178,7 +178,7 @@ for path_file in toffile_list:
     
 
 #plots for article   
-plot_method_behaviour(method_performance_results, list_likelihood_true_frag, list_likelihood_false_frag, list_likelihood_true_att, list_likelihood_false_att, list_ranking_true_frag, list_ranking_false_frag, list_ranking_true_att, list_ranking_false_att, fig_path)
+#plot_method_behaviour(method_performance_results, list_likelihood_true_frag, list_likelihood_false_frag, list_likelihood_true_att, list_likelihood_false_att, list_ranking_true_frag, list_ranking_false_frag, list_ranking_true_att, list_ranking_false_att, fig_path)
 
 
 i_met_res_filename = 0
