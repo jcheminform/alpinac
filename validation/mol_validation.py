@@ -94,7 +94,7 @@ mol_validation = [
     ("29118-24-9", "HFO-1234ze(E)",  "(E)-1,3,3,3-tetrafluoroprop-1-ene",               -19.0, "H2C3F4",    "C(=CF)C(F)(F)F",               ["HFO-1234zeE", "HFO1234zeE", "HFO-1234ze(E)"]),
     ("102687-65-0", "HCFO-1233zd(E)", "(E)-1-chloro-3,3,3-trifluoro prop-1-ene",          21.0, "H2C3F3Cl",  "C(=CCl)C(F)(F)F",              ["HCFO-1233zdE", "HCFO1233zdE", "HCFO-1233zd(E)"]),
     ("375-45-1", "TCHFB", "tetrachlorohexafluorobutane",                       134.2, "C4Cl4F6",   "C(C(C(F)(F)Cl)(F)Cl)(C(F)(F)Cl)(F)Cl", ["TCHFB", "tetrachlorohexafluorobutane", "tetrachlorohexafluoro-butane"]),
-    ("87-68-3", "HCBD", "1,1,2,3,4,4-hexachlorobuta-1,3-diene",                215.0, "C4Cl6",     "C(=C(Cl)Cl)(C(=C(Cl)Cl)Cl)Cl", ["hexachlorobutadiene", "HCBD"]),
+    ("87-68-3", "HCBD", "1,1,2,3,4,4-hexachlorobuta-1,3-diene",                215.0, "C4Cl6",     "C(=C(Cl)Cl)(C(=C(Cl)Cl)Cl)Cl", ["hexachlorobutadiene", "HCBD"])
 ]
 
 
