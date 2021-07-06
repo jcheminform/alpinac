@@ -43,6 +43,7 @@ You may have to install via the conda prompt:
 conda install matplotlib
 conda install h5py
 conda install -c conda-forge lmfit
+pip install jcamp
 pip install pysmiles
 ```
   
