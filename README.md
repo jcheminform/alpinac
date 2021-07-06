@@ -43,9 +43,9 @@ You may have to install via the conda prompt:
 conda install matplotlib
 conda install h5py
 conda install -c conda-forge lmfit
-pip install lmfit # or maybe pip3 install lmfit
+pip install pysmiles
 ```
-(Somehow `conda install lmfit` does not work).   
+  
 Install the _Networkx_ package in the Conda prompt:
 ```sell
 conda install -c anaconda networkx
@@ -161,6 +161,8 @@ or with a wrapper script (see `.sh` files, or
     [`periodic_table.py`](./periodic_table.py).
 -   **Output**: a graph of mass spectrum with labeled peaks (for the identified ones).
 
+Measured data are read and saved in the class structure `Compound` defined in the file `compound.py`.
+
 We now describe each step of Figure 1 and provide the road map of the code.
 
 -   **Step 1: Knapsack**. The functions are in `utils_identification.py`.
@@ -174,6 +176,7 @@ We now describe each step of Figure 1 and provide the road map of the code.
 -   **Step 7: Optimise multiple isotopocule sets**. Calls `lmfit` Python package.
 -   **Step 8: Update directed graph, remove singletons**.
 -   **Step 9: Eliminate not optimised sets**.
+-   **Step 10: Reconstruct most likely molecular ion(s)**.
 
 
 ## How to read the plotted mass spectra
@@ -210,6 +213,12 @@ This can happen if the mass uncertainty is high, or if there are many measured m
 1. Use a lower value for `max_opt_signal` in `const_identification.py`, e.g. 80%.
 
 2. Run ALPINAC using only a limited list of present chemical elements.
+
+## My data are not measured with EI but with a softer ionisation. Can I use ALPINAC?
+
+The main difference between EI and softer ionisation (such as chemical ionisation) is that no adduct formation occurs in an EI source. In practice, this means that we can assume that the formula of any detected mass has a non-negative DBE (double bound equivalent). This assumption is used to speed up the enumeration of the knapsack.
+
+If your measured data contains adducts with formulae of negative DBE, this is not supported by ALPINAC. The correct formulae will not be reconstructed.
 
 	
 
